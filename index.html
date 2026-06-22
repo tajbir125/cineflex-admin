@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CINEFLEX | কন্ট্রোল সেন্টার অ্যাপ</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background: #070913;
+            color: #f1f5f9;
+            font-family: 'Hind Siliguri', 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* কাস্টম স্ক্রোলবার */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #070913; }
+        ::-webkit-scrollbar-thumb { background: #252849; border-radius: 10px; }
+
+        /* অ্যাপ কন্টেইনার */
+        .app-container {
+            flex: 1;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem 1rem 90px 1rem; /* বটম বারের জন্য নিচে স্পেস */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* প্রিমিয়াম অ্যাপ হেডার */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            margin-bottom: 1.2rem;
+        }
+
+        .brand-zone h1 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #a855f7, #6366f1, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-zone p {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .user-view-btn {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 6px 14px;
+            border-radius: 50px;
+            color: #818cf8;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: 0.2s;
+        }
+        .user-view-btn:active { transform: scale(0.95); }
+
+        /* অ্যাপ স্ক্রিন/ট্যাব সিস্টেম */
+        .app-screen {
+            display: none;
+            animation: fadeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .app-screen.active-screen {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* মডার্ন স্লিক কার্ড গ্রিড (ড্যাশবোর্ড) */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 1.2rem;
+        }
+
+        .app-card {
+            background: #0f1225;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 14px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-card::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: transparent;
+        }
+        .card-purple::after { background: #a855f7; }
+        .card-orange::after { background: #f59e0b; }
+        .card-blue::after { background: #3b82f6; }
+        .card-green::after { background: #10b981; }
+
+        .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+        .card-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; }
+        
+        .card-purple .card-icon { background: rgba(168, 85, 247, 0.1); color: #c084fc; }
+        .card-orange .card-icon { background: rgba(245, 158, 11, 0.1); color: #fbbf24; }
+        .card-blue .card-icon { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
+        .card-green .card-icon { background: rgba(16, 185, 129, 0.1); color: #34d399; }
+
+        .card-title { font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
+        .card-value { font-size: 1.3rem; font-weight: 700; margin-top: 2px; }
+
+        .sync-btn { background: none; border: none; color: #a855f7; cursor: pointer; font-size: 0.8rem; }
+
+        /* প্রফেশনাল ফর্ম ডিজাইন */
+        .section-title { font-size: 1rem; font-weight: 700; color: #f1f5f9; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+        .section-title i { color: #a855f7; }
+
+        .input-box { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+        .input-box label { font-size: 0.8rem; font-weight: 600; color: #94a3b8; }
+        
+        .input-box input, .input-box select, .input-box textarea {
+            background: #12162e;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 12px;
+            color: white;
+            outline: none;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        .input-box input:focus, .input-box select:focus, .input-box textarea:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.15);
+        }
+
+        /* বাটন কুশন ইফেক্ট */
+        .app-btn {
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white; border: none; padding: 14px; border-radius: 12px;
+            font-size: 0.9rem; font-weight: 700; width: 100%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2); transition: 0.2s;
+        }
+        .app-btn:active { transform: scale(0.97); opacity: 0.9; }
+        .btn-secondary { background: #1e293b; color: #cbd5e1; box-shadow: none; margin-top: 8px; }
+        .btn-outline { background: transparent; border: 1px solid #10b981; color: #10b981; box-shadow: none; }
+
+        /* আপলোড সাকসেস লিংক স্ট্রিপ */
+        .link-strip {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px dashed rgba(16, 185, 129, 0.3);
+            padding: 10px; border-radius: 10px; margin-top: 10px;
+            display: none; align-items: center; justify-content: space-between; gap: 8px;
+        }
+        .link-strip span { font-size: 0.75rem; color: #34d399; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* ফিল্টার এবং সার্চ বার */
+        .filter-wrapper { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        .scroll-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+        .scroll-tabs::-webkit-scrollbar { display: none; }
+        
+        .pill-tab {
+            background: #12162e; border: 1px solid rgba(255,255,255,0.03);
+            padding: 6px 14px; border-radius: 50px; color: #94a3b8;
+            font-size: 0.75rem; font-weight: 600; white-space: nowrap; cursor: pointer;
+        }
+        .pill-tab.active-pill { background: #6366f1; color: white; border-color: transparent; }
+
+        /* নেটিভ অ্যাপ স্টাইল লিস্ট কার্ড */
+        .list-container { display: flex; flex-direction: column; gap: 8px; }
+        
+        .media-item {
+            background: #0f1225; padding: 8px; border-radius: 12px;
+            display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.02);
+        }
+        .media-thumb { width: 75px; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px; background: #070913; }
+        .media-info { flex: 1; min-width: 0; }
+        .media-info h4 { font-size: 0.85rem; font-weight: 600; color: #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .media-info p { font-size: 0.75rem; color: #64748b; margin-top: 1px; }
+        
+        .media-actions { display: flex; gap: 12px; padding-right: 4px; }
+        .action-icon-btn { background: none; border: none; font-size: 0.95rem; cursor: pointer; }
+
+        /* লাইভ ট্র্যাকার রো কার্ড */
+        .user-row {
+            background: #0f1225; padding: 12px; border-radius: 12px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+            border-left: 3px solid #f59e0b;
+        }
+        .u-meta h5 { font-size: 0.85rem; color: #fbbf24; font-weight: 700; }
+        .u-meta p { font-size: 0.7rem; color: #64748b; margin-top: 2px; }
+        .u-badge { background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; }
+
+        /* পিউর অ্যাপ লাইক ফিক্সড বটম নেভিগেশন বার */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; height: 68px;
+            background: rgba(15, 18, 37, 0.92); backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex; justify-content: space-around; align-items: center;
+            z-index: 9999; box-shadow: 0 -5px 25px rgba(0,0,0,0.5);
+        }
+
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #64748b; text-decoration: none; font-size: 0.65rem; font-weight: 600;
+            gap: 4px; background: none; border: none; cursor: pointer; width: 22%; height: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item i { font-size: 1.15rem; transition: transform 0.2s ease; }
+        .nav-item.active-nav { color: #6366f1; }
+        .nav-item.active-nav i { transform: translateY(-2px); color: #6366f1; }
+
+        /* টোস্ট মেসেজ পপআপ */
+        .app-toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px);
+            background: #6366f1; padding: 10px 20px; border-radius: 50px; color: white;
+            font-size: 0.8rem; font-weight: 700; box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
+            opacity: 0; pointer-events: none; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 999999;
+        }
+        .app-toast.show-toast { opacity: 1; transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- অ্যাপ হেডার -->
+    <div class="app-header">
+        <div class="brand-zone">
+            <h1>CINEFLEX APP</h1>
+            <p>প্রিমিয়াম কন্ট্রোল প্যানেল</p>
+        </div>
+        <a href="index.html" class="user-view-btn"><i class="fas fa-eye"></i> ইউজার ভিউ</a>
+    </div>
+
+    <!-- স্ক্রিন ১: ড্যাশবোর্ড -->
+    <div id="screen-dashboard" class="app-screen active-screen">
+        <div class="stat-grid">
+            <div class="app-card card-purple">
+                <div class="card-top"><span class="card-title">মোট ভিডিও</span><div class="card-icon"><i class="fas fa-film"></i></div></div>
+                <div class="card-value" id="videoCount">00</div>
+            </div>
+            <div class="app-card card-orange" onclick="switchTab('tracker')" style="cursor: pointer;">
+                <div class="card-top"><span class="card-title">লাইভ ইউজার</span><div class="card-icon"><i class="fas fa-bolt"></i></div></div>
+                <div class="card-value" id="liveUserCount">0</div>
+            </div>
+            <div class="app-card card-blue">
+                <div class="card-top"><span class="card-title">ডাটাবেজ</span><div class="card-icon"><i class="fas fa-database"></i></div></div>
+                <div class="card-value" style="font-size:0.9rem; margin-top:6px;">সংযুক্ত <button class="sync-btn" onclick="loadAllVideos()"><i class="fas fa-sync-alt"></i></button></div>
+            </div>
+            <div class="app-card card-green">
+                <div class="card-top"><span class="card-title">ImgBB API</span><div class="card-icon"><i class="fas fa-check-circle"></i></div></div>
+                <div class="card-value" style="font-size:0.9rem; margin-top:6px;">এক্টিভ</div>
+            </div>
+        </div>
+
+        <!-- কুইক অ্যাকশন ব্যানার -->
+        <div class="app-card card-purple" style="background: linear-gradient(135deg, #11142e, #0f1225); border: 1px solid rgba(168,85,247,0.15); margin-top:5px; padding: 1.2rem;">
+            <h4 style="font-size:0.9rem; margin-bottom:4px; color:#c084fc;"><i class="fas fa-wand-magic-sparkles"></i> স্বাগতম অ্যাডমিন!</h4>
+            <p style="font-size:0.75rem; color:#94a3b8; line-height:1.4;">নিচের নেভিগেশন বার ব্যবহার করে খুব সহজেই নতুন কনটেন্ট আপলোড, এডিট এবং রিয়েল-টাইম ট্র্যাকিং কন্ট্রোল করুন।</p>
+        </div>
+    </div>
+
+    <!-- স্ক্রিন ২: আপলোড ও পাবলিশ ফর্ম -->
+    <div id="screen-upload" class="app-screen">
+        <!-- ইমেজ আপলোডার সাব-সেকশন -->
+        <div class="app-card card-green" style="margin-bottom: 15px; background: #0f1322;">
+            <div class="section-title" style="margin-bottom: 8px;"><i class="fas fa-image" style="color:#10b981;"></i> থাম্বনেইল আপলোডার</div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="file" id="imageFile" style="flex:1; background:#070913; padding:8px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); color:white; font-size:0.75rem;">
+                <button class="app-btn btn-outline" id="uploadImageBtn" style="width:auto; padding:10px 14px; font-size:0.75rem;"><i class="fas fa-upload"></i></button>
+            </div>
+            <div id="uploadProgress" style="font-size:0.7rem; color:#34d399; font-weight:600; margin-top:5px;"></div>
+            <div id="uploadedUrlDiv" class="link-strip">
+                <span id="uploadedUrl">লিংক এখানে আসবে...</span>
+                <i class="fas fa-copy" onclick="copyUrl()" style="color:#34d399; cursor:pointer; font-size:0.9rem;"></i>
+            </div>
+        </div>
+
+        <!-- মূল ফর্ম -->
+        <div class="section-title"><i class="fas fa-plus-circle"></i> <span id="formTitle">নতুন কন্টেন্ট পাবলিশ</span></div>
+        
+        <div class="input-box"><label>ভিডিও টাইটেল</label><input type="text" id="videoTitle" placeholder="টাইটেল লিখুন"></div>
+        <div class="input-box"><label>ডিরেক্ট সোর্স ইউআরএল (MP4)</label><input type="text" id="videoSrc" placeholder="https://example.com/video.mp4"></div>
+        <div class="input-box"><label>থাম্বনেইল ইমেজ ইউআরএল</label><input type="text" id="videoThumb" placeholder="ইমেজ লিঙ্ক (অথবা উপরে আপলোড করুন)"></div>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div class="input-box">
+                <label>ক্যাটাগরি</label>
+                <select id="videoCategory">
+                    <option value="Indian Video">Indian Video</option>
+                    <option value="Bangla Viral Video">Bangla Viral Video</option>
+                    <option value="Anime">Anime</option>
+                    <option value="Vincent Vega Official">Vincent Vega Official</option>
+                    <option value="Best Asian Dramas">Best Asian Dramas</option>
+                    <option value="Jav HD">Jav HD</option>
+                </select>
+            </div>
+            <div class="input-box"><label>সময়কাল (Duration)</label><input type="text" id="videoDuration" value="0:00"></div>
+        </div>
+        
+        <div class="input-box"><label>ডিফল্ট ভিউস সংখ্যা</label><input type="number" id="videoViews" value="0"></div>
+        <div class="input-box"><label>ভিডিও ডেসক্রিপশন</label><textarea id="videoDesc" rows="3" placeholder="কন্টেন্ট বিবরণ..."></textarea></div>
+        
+        <button class="app-btn" id="saveBtn" style="margin-top: 8px;"><i class="fas fa-paper-plane"></i> সার্ভারে পাবলিশ করুন</button>
+        <button class="app-btn btn-secondary" id="cancelEditBtn" style="display:none;"><i class="fas fa-times"></i> এডিট বাতিল</button>
+    </div>
+
+    <!-- স্ক্রিন ৩: ভিডিও লিস্ট ম্যানেজার -->
+    <div id="screen-list" class="app-screen">
+        <div class="filter-wrapper">
+            <input type="text" id="searchInput" onkeyup="handleSearch()" style="width:100%; padding:11px; border-radius:10px; background:#12162e; border:1px solid rgba(255,255,255,0.05); color:white; font-size:0.8rem;" placeholder="টাইটেল বা আইডি দিয়ে খুঁজুন...">
+            <div class="scroll-tabs" id="categoryTags">
+                <button class="pill-tab active-pill" onclick="filterVideos('All', this)">সব ভিডিও</button>
+                <button class="pill-tab" onclick="filterVideos('Indian Video', this)">Indian Video</button>
+                <button class="pill-tab" onclick="filterVideos('Bangla Viral Video', this)">Bangla Viral Video</button>
+                <button class="pill-tab" onclick="filterVideos('Anime', this)">Anime</button>
+                <button class="pill-tab" onclick="filterVideos('Vincent Vega Official', this)">Vincent Vega Official</button>
+                <button class="pill-tab" onclick="filterVideos('Best Asian Dramas', this)">Best Asian Dramas</button>
+                <button class="pill-tab" onclick="filterVideos('Jav HD', this)">Jav HD</button>
+            </div>
+        </div>
+
+        <div class="list-container" id="videosListBody">
+            <!-- ডাইনামিক মিডিয়া আইটেম লোড হবে -->
+        </div>
+    </div>
+
+    <!-- স্ক্রিন ৪: লাইভ ইউজার ট্র্যাকার -->
+    <div id="screen-tracker" class="app-screen">
+        <div class="section-title" style="color:#f59e0b;"><i class="fas fa-broadcast-tower"></i> লাইভ অ্যাক্টিভ সেশনস</div>
+        <div class="list-container" id="trackerListBody">
+            <!-- ডাইনামিক লাইভ ইউজার লিস্ট আসবে -->
+        </div>
+    </div>
+</div>
+
+<!-- মোবাইল অ্যাপ ফিক্সড বটম নেভিগেশন বার -->
+<div class="bottom-nav">
+    <button class="nav-item active-nav" onclick="switchTab('dashboard', this)"><i class="fas fa-th-large"></i>ড্যাশবোর্ড</button>
+    <button class="nav-item" onclick="switchTab('upload', this)"><i class="fas fa-cloud-upload-alt"></i>আপলোড</button>
+    <button class="nav-item" onclick="switchTab('list', this)"><i class="fas fa-film"></i>ভিডিও লিস্ট</button>
+    <button class="nav-item" onclick="switchTab('tracker', this)"><i class="fas fa-satellite-dish"></i>ট্র্যাকার</button>
+</div>
+
+<div id="appToast" class="app-toast">সফল হয়েছে!</div>
+
+<script>
+    // Firebase Setup
+    const firebaseConfig = {
+        apiKey: "AIzaSyCiJfiwpIHjOKR7XRHnvKB8tFhfh18chJo",
+        authDomain: "firendbook.firebaseapp.com",
+        databaseURL: "https://firendbook-default-rtdb.firebaseio.com",
+        projectId: "firendbook",
+        storageBucket: "firendbook.firebasestorage.app",
+        messagingSenderId: "293320696679",
+        appId: "1:293320696679:web:e33950872967cd8fb2c5c2"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const videosRef = database.ref('videos');
+    const sessionsRef = database.ref('active_sessions');
+
+    let allVideos = [];
+    let editMode = false, editId = null;
+    let selectedCat = "All";
+
+    // অ্যাপ ট্যাব নেভিগেশন সিস্টেম সুইচ রুলস
+    function switchTab(screenId, element) {
+        document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active-screen'));
+        document.getElementById('screen-' + screenId).classList.add('active-screen');
+        
+        if(element) {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
+            element.classList.add('active-nav');
+        } else {
+            // যদি কার্ডে ক্লিক করে সুইট করা হয় তবে বটম বার আইকন চেঞ্জ করার লজিক
+            document.querySelectorAll('.nav-item').forEach(n => {
+                n.classList.remove('active-nav');
+                if(n.innerText.includes(screenId === 'tracker' ? 'ট্র্যাকার' : 'ড্যাশবোর্ড')) {
+                    n.classList.add('active-nav');
+                }
+            });
+        }
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    // ImgBB Upload
+    document.getElementById('uploadImageBtn').onclick = async () => {
+        const fileInput = document.getElementById('imageFile');
+        if(fileInput.files.length === 0) return alert("দয়া করে একটি ফাইল সিলেক্ট করুন!");
+        
+        const formData = new FormData(); 
+        formData.append('image', fileInput.files[0]);
+        document.getElementById('uploadProgress').innerText = "সার্ভারে আপলোড হচ্ছে...";
+
+        try {
+            const res = await fetch("https://api.imgbb.com/1/upload?key=603759eab69a103a7f059ce5c36ede14", {method:'POST', body:formData});
+            const result = await res.json();
+            if(result.success) {
+                const url = result.data.url;
+                document.getElementById('videoThumb').value = url;
+                document.getElementById('uploadedUrl').innerText = url;
+                document.getElementById('uploadedUrlDiv').style.display = 'flex';
+                document.getElementById('uploadProgress').innerText = "✅ আপলোড সফল হয়েছে!";
+                showToast("থাম্বনেইল লিংক যোগ হয়েছে!");
+            } else {
+                document.getElementById('uploadProgress').innerText = "❌ আপলোড ব্যর্থ!";
+                alert("Error: " + result.error.message);
+            }
+        } catch(e) { 
+            document.getElementById('uploadProgress').innerText = "❌ নেটওয়ার্ক ত্রুটি!";
+        }
+    };
+
+    function copyUrl() {
+        navigator.clipboard.writeText(document.getElementById('videoThumb').value);
+        showToast("লিংক ক্লিপবোর্ডে কপি হয়েছে!");
+    }
+
+    // ডাটাবেজ থেকে ভিডিও লোড
+    function loadAllVideos() {
+        videosRef.on('value', (snap) => {
+            const data = snap.val();
+            allVideos = data ? Object.keys(data).map(k => ({id:k, ...data[k]})) : [];
+            allVideos.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+            document.getElementById('videoCount').innerText = String(allVideos.length).padStart(2, '0');
+            renderAppList();
+        });
+    }
+
+    // রিয়েল-টাইম লাইভ ইউজার ট্র্যাকার অ্যাপ লেআউট
+    function listenToLiveUsers() {
+        sessionsRef.on('value', (snapshot) => {
+            const sessions = snapshot.val();
+            const container = document.getElementById('trackerListBody');
+            
+            if (!sessions) {
+                document.getElementById('liveUserCount').innerText = "0";
+                container.innerHTML = `<div style="text-align:center; color:#64748b; padding:2rem; font-size:0.85rem;">কোনো একটিভ ইউজার নেই</div>`;
+                return;
+            }
+
+            const sessionList = Object.keys(sessions).map(key => ({ id: key, ...sessions[key] }));
+            document.getElementById('liveUserCount').innerText = sessionList.length;
+
+            container.innerHTML = sessionList.map((user) => {
+                let devIcon = "fa-desktop";
+                if(user.device === "Mobile") devIcon = "fa-mobile-alt";
+                if(user.device === "Tablet") devIcon = "fa-tablet-alt";
+
+                const timeString = user.lastActive ? new Date(user.lastActive).toLocaleTimeString() : 'N/A';
+                const rawId = user.id || user.key || "U";
+                const userIdShort = String(rawId).replace(/[^a-zA-Z0-9]/g, '').substring(0, 5);
+
+                return `
+                    <div class="user-row">
+                        <div class="u-meta">
+                            <h5><i class="fas fa-user-circle"></i> User-${userIdShort}</h5>
+                            <p><i class="${devIcon}"></i> OS: ${user.os || 'Unknown'} | Br: ${user.browser || 'Unknown'}</p>
+                        </div>
+                        <div class="u-badge"><i class="fas fa-clock"></i> ${timeString}</div>
+                    </div>
+                `;
+            }).join('');
+        });
+    }
+
+    window.filterVideos = (cat, btn) => {
+        selectedCat = cat;
+        document.querySelectorAll('#categoryTags .pill-tab').forEach(b => b.classList.remove('active-pill'));
+        btn.classList.add('active-pill');
+        renderAppList();
+    };
+
+    window.handleSearch = () => renderAppList();
+
+    // অ্যাপ-স্টাইল মিডিয়া লিস্ট রেন্ডারিং
+    function renderAppList() {
+        const term = document.getElementById('searchInput').value.toLowerCase();
+        const container = document.getElementById('videosListBody');
+        const filtered = allVideos.filter(v => 
+            (selectedCat === "All" || v.category === selectedCat) &&
+            ((v.title && v.title.toLowerCase().includes(term)) || (v.id && v.id.toLowerCase().includes(term)))
+        );
+
+        if(filtered.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:#64748b; padding:2rem; font-size:0.85rem;">কোনো ম্যাচিং ভিডিও পাওয়া যায়নি</div>`;
+            return;
+        }
+
+        container.innerHTML = filtered.map(v => `
+            <div class="media-item">
+                <img src="${v.thumb || 'https://via.placeholder.com/75x42'}" class="media-thumb" onerror="this.src='https://via.placeholder.com/75x42'">
+                <div class="media-info">
+                    <h4>${v.title || 'No Title'}</h4>
+                    <p>ID: <span style="color:#a855f7;">${v.id}</span> | ${v.category || 'General'}</p>
+                </div>
+                <div class="media-actions">
+                    <button class="action-icon-btn" onclick="editV('${v.id}')" style="color:#fbbf24;"><i class="fas fa-edit"></i></button>
+                    <button class="action-icon-btn" onclick="deleteV('${v.id}')" style="color:#ef4444;"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function getNextId() {
+        if(allVideos.length === 0) return "v1";
+        const nums = allVideos.map(v => parseInt(v.id.replace('v',''))).filter(n => !isNaN(n));
+        return "v" + (nums.length ? (Math.max(...nums) + 1) : 1);
+    }
+
+    // পাবলিশ ও সেভ বাটন ট্রিগার
+    document.getElementById('saveBtn').onclick = () => {
+        const data = {
+            title: document.getElementById('videoTitle').value.trim(),
+            src: document.getElementById('videoSrc').value.trim(),
+            thumb: document.getElementById('videoThumb').value.trim(),
+            category: document.getElementById('videoCategory').value,
+            duration: document.getElementById('videoDuration').value.trim() || "0:00",
+            views: parseInt(document.getElementById('videoViews').value) || 0,
+            desc: document.getElementById('videoDesc').value.trim(),
+            createdAt: Date.now()
+        };
+
+        if(!data.title || !data.src) return alert("টাইটেল এবং ভিডিও লিঙ্ক দিতেই হবে!");
+
+        if(editMode) {
+            videosRef.child(editId).update(data).then(() => { showToast("কনটেন্ট আপডেট সফল!"); resetForm(); switchTab('list'); });
+        } else {
+            const id = getNextId();
+            videosRef.child(id).set(data).then(() => { showToast("নতুন কনটেন্ট লাইভ হয়েছে!"); resetForm(); switchTab('list'); });
+        }
+    };
+
+    window.editV = (id) => {
+        const v = allVideos.find(x => x.id === id);
+        if(!v) return;
+        document.getElementById('videoTitle').value = v.title || '';
+        document.getElementById('videoSrc').value = v.src || '';
+        document.getElementById('videoThumb').value = v.thumb || '';
+        document.getElementById('videoCategory').value = v.category || 'Indian Video';
+        document.getElementById('videoDuration').value = v.duration || '0:00';
+        document.getElementById('videoViews').value = v.views || 0;
+        document.getElementById('videoDesc').value = v.desc || '';
+        
+        editMode = true; editId = id;
+        document.getElementById('formTitle').innerText = "এডিট মোড: " + id;
+        document.getElementById('cancelEditBtn').style.display = 'block';
+        switchTab('upload');
+    };
+
+    document.getElementById('cancelEditBtn').onclick = () => resetForm();
+
+    window.deleteV = (id) => {
+        if(confirm("এই ভিডিওটি ডিলিট করতে চান?")) {
+            videosRef.child(id).remove().then(() => showToast("ভিডিও মুছে ফেলা হয়েছে!"));
+        }
+    };
+
+    function resetForm() {
+        editMode = false; editId = null;
+        document.querySelectorAll('#screen-upload input, #screen-upload textarea').forEach(i => i.value = '');
+        document.getElementById('videoViews').value = '0';
+        document.getElementById('videoDuration').value = '0:00';
+        document.getElementById('videoCategory').selectedIndex = 0;
+        document.getElementById('formTitle').innerText = "নতুন কন্টেন্ট পাবলিশ";
+        document.getElementById('cancelEditBtn').style.display = 'none';
+        document.getElementById('uploadedUrlDiv').style.display = 'none';
+        document.getElementById('uploadProgress').innerText = "";
+        document.getElementById('imageFile').value = "";
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('appToast');
+        toast.innerText = msg;
+        toast.classList.add('show-toast');
+        setTimeout(() => toast.classList.remove('show-toast'), 2500);
+    }
+
+    // ইনিশিয়াল এক্সিকিউশন
+    loadAllVideos();
+    listenToLiveUsers();
+</script>
+</body>
+</html>
