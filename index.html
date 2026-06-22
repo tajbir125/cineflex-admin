@@ -33,7 +33,7 @@
             width: 100%;
             max-width: 600px;
             margin: 0 auto;
-            padding: 1rem 1rem 90px 1rem; /* বটম বারের জন্য নিচে স্পেস */
+            padding: 1rem 1rem 90px 1rem;
             display: flex;
             flex-direction: column;
         }
@@ -360,10 +360,10 @@
 
 <!-- মোবাইল অ্যাপ ফিক্সড বটম নেভিগেশন বার -->
 <div class="bottom-nav">
-    <button class="nav-item active-nav" onclick="switchTab('dashboard', this)"><i class="fas fa-th-large"></i>ড্যাশবোর্ড</button>
-    <button class="nav-item" onclick="switchTab('upload', this)"><i class="fas fa-cloud-upload-alt"></i>আপলোড</button>
-    <button class="nav-item" onclick="switchTab('list', this)"><i class="fas fa-film"></i>ভিডিও লিস্ট</button>
-    <button class="nav-item" onclick="switchTab('tracker', this)"><i class="fas fa-satellite-dish"></i>ট্র্যাকার</button>
+    <button id="nav-dashboard" class="nav-item active-nav" onclick="switchTab('dashboard', this)"><i class="fas fa-th-large"></i>ড্যাশবোর্ড</button>
+    <button id="nav-upload" class="nav-item" onclick="switchTab('upload', this)"><i class="fas fa-cloud-upload-alt"></i>আপলোড</button>
+    <button id="nav-list" class="nav-item" onclick="switchTab('list', this)"><i class="fas fa-film"></i>ভিডিও লিস্ট</button>
+    <button id="nav-tracker" class="nav-item" onclick="switchTab('tracker', this)"><i class="fas fa-satellite-dish"></i>ট্র্যাকার</button>
 </div>
 
 <div id="appToast" class="app-toast">সফল হয়েছে!</div>
@@ -393,17 +393,12 @@
         document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active-screen'));
         document.getElementById('screen-' + screenId).classList.add('active-screen');
         
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
         if(element) {
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
             element.classList.add('active-nav');
         } else {
-            // যদি কার্ডে ক্লিক করে সুইট করা হয় তবে বটম বার আইকন চেঞ্জ করার লজিক
-            document.querySelectorAll('.nav-item').forEach(n => {
-                n.classList.remove('active-nav');
-                if(n.innerText.includes(screenId === 'tracker' ? 'ট্র্যাকার' : 'ড্যাশবোর্ড')) {
-                    n.classList.add('active-nav');
-                }
-            });
+            const activeBtn = document.getElementById('nav-' + screenId);
+            if(activeBtn) activeBtn.classList.add('active-nav');
         }
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
