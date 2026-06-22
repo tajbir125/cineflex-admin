@@ -231,8 +231,6 @@
         }
 
         .nav-item i { font-size: 1.15rem; transition: transform 0.2s ease; }
-        
-        /* এক্টিভ কালার স্টাইল */
         .nav-item.active-nav { color: #6366f1 !important; }
         .nav-item.active-nav i { transform: translateY(-2px); color: #6366f1 !important; }
 
@@ -249,7 +247,6 @@
 <body>
 
 <div class="app-container">
-    <!-- অ্যাপ হেডার -->
     <div class="app-header">
         <div class="brand-zone">
             <h1>CINEFLEX APP</h1>
@@ -258,7 +255,6 @@
         <a href="index.html" class="user-view-btn"><i class="fas fa-eye"></i> ইউজার ভিউ</a>
     </div>
 
-    <!-- স্ক্রিন ১: ড্যাশবোর্ড -->
     <div id="screen-dashboard" class="app-screen active-screen">
         <div class="stat-grid">
             <div class="app-card card-purple">
@@ -279,16 +275,13 @@
             </div>
         </div>
 
-        <!-- কুইক অ্যাকশন ব্যানার -->
         <div class="app-card card-purple" style="background: linear-gradient(135deg, #11142e, #0f1225); border: 1px solid rgba(168,85,247,0.15); margin-top:5px; padding: 1.2rem;">
             <h4 style="font-size:0.9rem; margin-bottom:4px; color:#c084fc;"><i class="fas fa-wand-magic-sparkles"></i> স্বাগতম অ্যাডমিন!</h4>
             <p style="font-size:0.75rem; color:#94a3b8; line-height:1.4;">নিচের নেভিগেশন বার ব্যবহার করে খুব সহজেই নতুন কন্টেন্ট আপলোড, এডিট এবং রিয়েল-টাইম ট্র্যাকিং কন্ট্রোল করুন।</p>
         </div>
     </div>
 
-    <!-- স্ক্রিন ২: আপলোড ও পাবলিশ ফর্ম -->
     <div id="screen-upload" class="app-screen">
-        <!-- ইমেজ আপলোডার সাব-সেকশন -->
         <div class="app-card card-green" style="margin-bottom: 15px; background: #0f1322;">
             <div class="section-title" style="margin-bottom: 8px;"><i class="fas fa-image" style="color:#10b981;"></i> থাম্বনেইল আপলোডার</div>
             <div style="display: flex; gap: 8px; align-items: center;">
@@ -302,7 +295,6 @@
             </div>
         </div>
 
-        <!-- মূল ফর্ম -->
         <div class="section-title"><i class="fas fa-plus-circle"></i> <span id="formTitle">নতুন কন্টেন্ট পাবলিশ</span></div>
         
         <div class="input-box"><label>ভিডিও টাইটেল</label><input type="text" id="videoTitle" placeholder="টাইটেল লিখুন"></div>
@@ -331,7 +323,6 @@
         <button class="app-btn btn-secondary" id="cancelEditBtn" style="display:none;"><i class="fas fa-times"></i> এডিট বাতিল</button>
     </div>
 
-    <!-- স্ক্রিন ৩: ভিডিও লিস্ট ম্যানেজার -->
     <div id="screen-list" class="app-screen">
         <div class="filter-wrapper">
             <input type="text" id="searchInput" onkeyup="handleSearch()" style="width:100%; padding:11px; border-radius:10px; background:#12162e; border:1px solid rgba(255,255,255,0.05); color:white; font-size:0.8rem;" placeholder="টাইটেল বা আইডি দিয়ে খুঁজুন...">
@@ -347,20 +338,16 @@
         </div>
 
         <div class="list-container" id="videosListBody">
-            <!-- ডাইনামিক মিডিয়া আইটেম লোড হবে -->
-        </div>
+            </div>
     </div>
 
-    <!-- স্ক্রিন ৪: লাইভ ইউজার ট্র্যাকার -->
     <div id="screen-tracker" class="app-screen">
         <div class="section-title" style="color:#f59e0b;"><i class="fas fa-broadcast-tower"></i> লাইভ অ্যাক্টিভ সেশনস</div>
         <div class="list-container" id="trackerListBody">
-            <!-- ডাইনামিক লাইভ ইউজার লিস্ট আসবে -->
-        </div>
+            </div>
     </div>
 </div>
 
-<!-- মোবাইল অ্যাপ ফিক্সড বটম নেভিগেশন বার -->
 <div class="bottom-nav">
     <button id="nav-dashboard" class="nav-item active-nav" onclick="switchTab('dashboard')"><i class="fas fa-th-large"></i>ড্যাশবোর্ড</button>
     <button id="nav-upload" class="nav-item" onclick="switchTab('upload')"><i class="fas fa-cloud-upload-alt"></i>আপলোড</button>
@@ -390,22 +377,16 @@
     let editMode = false, editId = null;
     let selectedCat = "All";
 
-    // ট্যাব পরিবর্তন এবং নেভিগেশন বাটন হাইলাইট করার ফিক্সড ফাংশন
+    // ট্যাব পরিবর্তন এবং নেভিগেশন বাটন হাইলাইট করার ফাংশন
     function switchTab(screenId) {
-        // সব স্ক্রিন হাইড করা
         document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active-screen'));
-        // নির্দিষ্ট স্ক্রিন শো করা
         document.getElementById('screen-' + screenId).classList.add('active-screen');
         
-        // সব নেভিগেশন বাটনের একটিভ কালার রিমুভ করা
         document.querySelectorAll('.bottom-nav .nav-item').forEach(n => n.classList.remove('active-nav'));
-        
-        // নির্দিষ্ট বাটনে একটিভ কালার সেট করা
         const activeBtn = document.getElementById('nav-' + screenId);
         if(activeBtn) {
             activeBtn.classList.add('active-nav');
         }
-        
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
@@ -415,7 +396,7 @@
         if(fileInput.files.length === 0) return alert("দয়া করে একটি ফাইল সিলেক্ট করুন!");
         
         const formData = new FormData(); 
-        formData.append('image', fileInput.files[0]);
+        formData.append('image', fileInput.files);
         document.getElementById('uploadProgress').innerText = "সার্ভারে আপলোড হচ্ছে...";
 
         try {
@@ -453,7 +434,7 @@
         });
     }
 
-    // রিয়েল-টাইম লাইভ ইউজার ট্র্যাকার অ্যাপ লেআউট
+    // রিয়েল-টাইম লাইভ ইউজার ট্র্যাকার রেন্ডারিং লজিক (ফিক্সড)
     function listenToLiveUsers() {
         sessionsRef.on('value', (snapshot) => {
             const sessions = snapshot.val();
@@ -465,9 +446,13 @@
                 return;
             }
 
-            const sessionList = Object.keys(sessions).map(key => ({ id: key, ...sessions[key] }));
+            const sessionList = Object.keys(sessions).map(key => {
+                return { id: key, ...sessions[key] };
+            });
+            
             document.getElementById('liveUserCount').innerText = sessionList.length;
 
+            // ম্যাপ মেথডের রিটার্ন লজিক ফিক্স করা হয়েছে
             container.innerHTML = sessionList.map((user) => {
                 let devIcon = "fa-desktop";
                 if(user.device === "Mobile") devIcon = "fa-mobile-alt";
@@ -481,7 +466,7 @@
                     <div class="user-row">
                         <div class="u-meta">
                             <h5><i class="fas fa-user-circle"></i> User-${userIdShort}</h5>
-                            <p><i class="${devIcon}"></i> OS: ${user.os || 'Unknown'} | Br: ${user.browser || 'Unknown'}</p>
+                            <p><i class="fas ${devIcon}"></i> OS: ${user.os || 'Unknown'} | Br: ${user.browser || 'Unknown'}</p>
                         </div>
                         <div class="u-badge"><i class="fas fa-clock"></i> ${timeString}</div>
                     </div>
@@ -499,7 +484,7 @@
 
     window.handleSearch = () => renderAppList();
 
-    // অ্যাপ-স্টাইল মিডিয়া লিস্ট রেন্ডারিং
+    // মিডিয়া লিস্ট রেন্ডারিং
     function renderAppList() {
         const term = document.getElementById('searchInput').value.toLowerCase();
         const container = document.getElementById('videosListBody');
