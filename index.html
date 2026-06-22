@@ -231,8 +231,10 @@
         }
 
         .nav-item i { font-size: 1.15rem; transition: transform 0.2s ease; }
-        .nav-item.active-nav { color: #6366f1; }
-        .nav-item.active-nav i { transform: translateY(-2px); color: #6366f1; }
+        
+        /* এক্টিভ কালার স্টাইল */
+        .nav-item.active-nav { color: #6366f1 !important; }
+        .nav-item.active-nav i { transform: translateY(-2px); color: #6366f1 !important; }
 
         /* টোস্ট মেসেজ পপআপ */
         .app-toast {
@@ -280,7 +282,7 @@
         <!-- কুইক অ্যাকশন ব্যানার -->
         <div class="app-card card-purple" style="background: linear-gradient(135deg, #11142e, #0f1225); border: 1px solid rgba(168,85,247,0.15); margin-top:5px; padding: 1.2rem;">
             <h4 style="font-size:0.9rem; margin-bottom:4px; color:#c084fc;"><i class="fas fa-wand-magic-sparkles"></i> স্বাগতম অ্যাডমিন!</h4>
-            <p style="font-size:0.75rem; color:#94a3b8; line-height:1.4;">নিচের নেভিগেশন বার ব্যবহার করে খুব সহজেই নতুন কনটেন্ট আপলোড, এডিট এবং রিয়েল-টাইম ট্র্যাকিং কন্ট্রোল করুন।</p>
+            <p style="font-size:0.75rem; color:#94a3b8; line-height:1.4;">নিচের নেভিগেশন বার ব্যবহার করে খুব সহজেই নতুন কন্টেন্ট আপলোড, এডিট এবং রিয়েল-টাইম ট্র্যাকিং কন্ট্রোল করুন।</p>
         </div>
     </div>
 
@@ -360,10 +362,10 @@
 
 <!-- মোবাইল অ্যাপ ফিক্সড বটম নেভিগেশন বার -->
 <div class="bottom-nav">
-    <button id="nav-dashboard" class="nav-item active-nav" onclick="switchTab('dashboard', this)"><i class="fas fa-th-large"></i>ড্যাশবোর্ড</button>
-    <button id="nav-upload" class="nav-item" onclick="switchTab('upload', this)"><i class="fas fa-cloud-upload-alt"></i>আপলোড</button>
-    <button id="nav-list" class="nav-item" onclick="switchTab('list', this)"><i class="fas fa-film"></i>ভিডিও লিস্ট</button>
-    <button id="nav-tracker" class="nav-item" onclick="switchTab('tracker', this)"><i class="fas fa-satellite-dish"></i>ট্র্যাকার</button>
+    <button id="nav-dashboard" class="nav-item active-nav" onclick="switchTab('dashboard')"><i class="fas fa-th-large"></i>ড্যাশবোর্ড</button>
+    <button id="nav-upload" class="nav-item" onclick="switchTab('upload')"><i class="fas fa-cloud-upload-alt"></i>আপলোড</button>
+    <button id="nav-list" class="nav-item" onclick="switchTab('list')"><i class="fas fa-film"></i>ভিডিও লিস্ট</button>
+    <button id="nav-tracker" class="nav-item" onclick="switchTab('tracker')"><i class="fas fa-satellite-dish"></i>ট্র্যাকার</button>
 </div>
 
 <div id="appToast" class="app-toast">সফল হয়েছে!</div>
@@ -388,18 +390,22 @@
     let editMode = false, editId = null;
     let selectedCat = "All";
 
-    // অ্যাপ ট্যাব নেভিগেশন সিস্টেম সুইচ রুলস
-    function switchTab(screenId, element) {
+    // ট্যাব পরিবর্তন এবং নেভিগেশন বাটন হাইলাইট করার ফিক্সড ফাংশন
+    function switchTab(screenId) {
+        // সব স্ক্রিন হাইড করা
         document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active-screen'));
+        // নির্দিষ্ট স্ক্রিন শো করা
         document.getElementById('screen-' + screenId).classList.add('active-screen');
         
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
-        if(element) {
-            element.classList.add('active-nav');
-        } else {
-            const activeBtn = document.getElementById('nav-' + screenId);
-            if(activeBtn) activeBtn.classList.add('active-nav');
+        // সব নেভিগেশন বাটনের একটিভ কালার রিমুভ করা
+        document.querySelectorAll('.bottom-nav .nav-item').forEach(n => n.classList.remove('active-nav'));
+        
+        // নির্দিষ্ট বাটনে একটিভ কালার সেট করা
+        const activeBtn = document.getElementById('nav-' + screenId);
+        if(activeBtn) {
+            activeBtn.classList.add('active-nav');
         }
+        
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
